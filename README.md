@@ -1,34 +1,78 @@
-This is a [Next.js](https://nextjs.org/) project bootstrapped with [`create-next-app`](https://github.com/vercel/next.js/tree/canary/packages/create-next-app).
+# Ethereum Oracle Project
 
-## Getting Started
+* App uses react for the front end with web3 to make calls to the contract. 
+* This contract is deployed on the Kovan test network at the address: 0xA5342e4a26e3434f6cfE72D1636243eF28a56c88.
+* This app is designed to test a stock price oracle. :D 
 
-First, run the development server:
+## :books: General info
 
-```bash
-npm run dev
-# or
-yarn dev
+
+* This app allows users to view the closing price of a given stock on their selected day. The interesting part of the application is that the api call is made using a decentralized oracle. 
+
+* **Note:** The contract is deployed on the Kovan test network. All eth that is used on the site is test ether. 
+
+* Once the submit button is pressed users wait until a pop up appears displaying the closing price of the stock. 
+
+## :camera: Demo
+
+
+
+https://user-images.githubusercontent.com/66892566/149443974-5f0f08fa-f8b1-46c1-a358-f02159fd7e8e.mp4
+
+
+## :computer: Smart Contract
+
+* Oracle contract that is used in the website.
+
+```solidity
+// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.7;
+
+import "@chainlink/contracts/src/v0.8/ChainlinkClient.sol";
+
+contract APIConsumer is ChainlinkClient {
+    using Chainlink for Chainlink.Request;
+  
+    uint256 public volume;
+    
+    address private oracle;
+    bytes32 private jobId;
+    uint256 private fee;
+    
+    event newValue(uint256 value);
+
+    constructor() {
+        setPublicChainlinkToken();
+        oracle = 0xc57B33452b4F7BB189bB5AfaE9cc4aBa1f7a4FD8;
+        jobId = "d5270d1c311941d0b08bead21fea7747";
+        fee = 0.1 * 10 ** 18; // (Varies by network and job)
+    }
+    
+    function requestVolumeData( string memory apiURL ) public returns (bytes32 requestId) 
+    {
+        Chainlink.Request memory request = buildChainlinkRequest(jobId, address(this), this.fulfill.selector);
+        
+        request.add("get", apiURL);
+
+        request.add("path", "close");
+        
+        return sendChainlinkRequestTo(oracle, request, fee);
+    }
+    
+    function fulfill(bytes32 _requestId, uint256 _volume) public recordChainlinkFulfillment(_requestId)
+    {
+        volume = _volume;
+        emit newValue(_volume);
+    }
+}
+
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
 
-You can start editing the page by modifying `pages/index.js`. The page auto-updates as you edit the file.
+## :file_folder: License
 
-[API routes](https://nextjs.org/docs/api-routes/introduction) can be accessed on [http://localhost:3000/api/hello](http://localhost:3000/api/hello). This endpoint can be edited in `pages/api/hello.js`.
+* This project is licensed under the terms of the MIT license.
 
-The `pages/api` directory is mapped to `/api/*`. Files in this directory are treated as [API routes](https://nextjs.org/docs/api-routes/introduction) instead of React pages.
+## :envelope: Contact
 
-## Learn More
-
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js/) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/deployment) for more details.
+* Repo created by [Stanley Moukhametzianov](https://github.com/Stanley-Moukhametzianov?tab=repositories), email: stanleymoukh@gmail.com
